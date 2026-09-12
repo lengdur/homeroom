@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin - Gestionar Exposiciones</title>
+    <style>
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        padding: 20px;
+        background: linear-gradient(135deg, #5b9b69, #2f7653);
+        font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+      }
+
+      .container {
+        width: min(94vw, 800px);
+        margin: 0 auto;
+        padding: 40px;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+      }
+
+      h1 { margin: 0 0 30px; text-align: center; color: #285c33; }
+      .form-group { margin-bottom: 20px; }
+      label { display: block; margin-bottom: 8px; color: #285c33; font-weight: 700; }
+      input, textarea, select {
+        width: 100%;
+        padding: 12px;
+        border: 2px solid #c5dfc9;
+        border-radius: 8px;
+        font: inherit;
+      }
+      input:focus, textarea:focus, select:focus { outline: none; border-color: #5b9b69; }
+      textarea { min-height: 120px; resize: vertical; }
+
+      .button-group { display: flex; gap: 12px; margin-top: 28px; }
+      button { flex: 1; padding: 14px 20px; border: 0; border-radius: 8px; font: inherit; font-weight: 700; cursor: pointer; }
+      .btn-save { background: #4f9660; color: white; }
+      .btn-back { background: #e1eee3; color: #285c33; }
+      .exposiciones-list { margin-top: 38px; padding-top: 30px; border-top: 2px solid #e4eee5; }
+      .exposiciones-list h2 { color: #285c33; }
+      .exposicion-item { display: flex; align-items: center; gap: 16px; justify-content: space-between; margin-bottom: 12px; padding: 16px; border-radius: 8px; background: #eff8f0; }
+      .exposicion-info { flex: 1; }
+      .exposicion-info h3 { margin: 0 0 5px; color: #285c33; }
+      .exposicion-info p { margin: 0; color: #607267; font-size: 0.9rem; }
+      .btn-delete { flex: 0 0 auto; padding: 8px 16px; background: #d9534f; color: white; font-size: 0.85rem; }
+      .alert { margin-bottom: 18px; padding: 14px; border-radius: 8px; background: #dff1e1; color: #285c33; }
+
+      @media (max-width: 560px) {
+        .container { padding: 26px 18px; }
+        .button-group { flex-direction: column; }
+        .exposicion-item { align-items: stretch; flex-direction: column; }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="container">
+      <h1>Gestionar Exposiciones</h1>
+      <div id="alertBox" aria-live="polite"></div>
+
+      <form id="exposicionForm">
+        <div class="form-group">
+          <label for="tema">Tema</label>
+          <select id="tema" required>
+            <option value="">Selecciona tema...</option>
+            <option value="1">Mates</option>
+            <option value="2">Lengua</option>
+            <option value="3">Historia</option>
+            <option value="4">Biología/Geología</option>
+            <option value="5">Física/Química</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="titulo">Título</label>
+          <input id="titulo" type="text" placeholder="Ej: El sistema solar" required />
+        </div>
+
+        <div class="form-group">
+          <label for="contenido">Contenido</label>
+          <textarea id="contenido" placeholder="Escribe el contenido de la exposición..."></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="archivo">Archivo (PDF, DOCX, TXT, etc.)</label>
+          <input id="archivo" type="file" />
+        </div>
+
+        <div class="button-group">
+          <button class="btn-save" type="submit">Guardar exposición</button>
+          <button class="btn-back" type="button" onclick="window.location.href='admin.html'">Volver</button>
+        </div>
+      </form>
+
+      <section class="exposiciones-list">
+        <h2>Exposiciones activas</h2>
+        <div id="exposicionesList"></div>
+      </section>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+    <script>
+      requireAdmin();
+
+      const form = document.getElementById('exposicionForm');
+      const list = document.getElementById('exposicionesList');
+      const alertBox = document.getElementById('alertBox');
+      const temas = ['Mates', 'Lengua', 'Historia', 'Biología/Geología', 'Física/Química'];
+
+      function showAlert(message) {
+        alertBox.textContent = message;
+        setTimeout(() => { alertBox.textContent = ''; }, 3500);
+      }
+
+      async function loadExposiciones() {
+        const { data: exposiciones, error } = await supabaseClient.from('exposiciones').select('*').order('posicion');
+        if (error) throw error;
+        list.innerHTML = exposiciones.length ? '' : '<p>No hay exposiciones guardadas aún.</p>';
+        exposiciones.forEach(exposicion => {
+          const item = document.createElement('div');
+          item.className = 'exposicion-item';
+          item.innerHTML = '<div class="exposicion-info"><h3>' + (temas[exposicion.posicion - 1] || 'Tema') + ': ' + exposicion.titulo + '</h3><p>' + (exposicion.contenido || 'Sin contenido') + '</p></div><button class="btn-delete" type="button">Eliminar</button>';
+          item.querySelector('.btn-delete').addEventListener('click', () => deleteExposicion(exposicion.id));
+          list.appendChild(item);
+        });
+      }
+
+      async function deleteExposicion(id) {
+        if (!confirm('¿Quieres eliminar esta exposición?')) return;
+        const { error } = await supabaseClient.from('exposiciones').delete().eq('id', id);
+        if (error) { showAlert(error.message || 'No se pudo eliminar la exposición.'); return; }
+        await loadExposiciones();
+        showAlert('Exposición eliminada correctamente.');
+      }
+
+      form.addEventListener('submit', async event => {
+        event.preventDefault();
+        const posicion = document.getElementById('tema').value;
+        const titulo = document.getElementById('titulo').value.trim();
+        const contenido = document.getElementById('contenido').value.trim();
+        const { error } = await supabaseClient.from('exposiciones').upsert({ posicion: Number(posicion), titulo, contenido }, { onConflict: 'posicion' });
+        if (error) { showAlert(error.message || 'No se pudo guardar la exposición.'); return; }
+        form.reset();
+        await loadExposiciones();
+        showAlert('Exposición guardada correctamente en Supabase.');
+      });
+
+      loadExposiciones().catch(error => showAlert(error.message));
+    </script>
+  </body>
+</html>

@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Verificar correo</title>
+    <style>
+      * { box-sizing: border-box; }
+      body { margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 20px; background: linear-gradient(135deg, #fff9dc, #eaf2ff); font-family: "Trebuchet MS", "Segoe UI", sans-serif; color: #243746; }
+      .box { width: min(92vw, 430px); padding: 32px 26px; background: rgba(255,255,255,.9); border: 2px solid #efd88b; border-radius: 16px; box-shadow: 0 14px 30px rgba(80,80,50,.14); }
+      h1 { margin: 0 0 12px; text-align: center; color: #7a6729; }
+      p { line-height: 1.45; color: #607581; }
+      label { display: block; margin: 18px 0 7px; color: #7a6729; font-weight: 700; }
+      input { width: 100%; padding: 13px; border: 2px solid #f2d778; border-radius: 9px; font: inherit; }
+      button { width: 100%; margin-top: 20px; padding: 13px; border: 0; border-radius: 9px; background: #e7c65a; color: #655123; font: inherit; font-weight: 700; cursor: pointer; }
+      .message { min-height: 22px; margin-top: 16px; font-weight: 700; }
+      a { display: block; margin-top: 18px; text-align: center; color: #286675; font-weight: 700; }
+    </style>
+  </head>
+  <body>
+    <main class="box">
+      <h1>Verifica tu correo</h1>
+      <p>Hemos enviado un enlace de verificación a tu correo electrónico. Ábrelo para activar tu cuenta.</p>
+      <form id="verifyForm">
+        <label for="email">Correo electrónico</label>
+        <input id="email" type="email" required />
+        <button type="submit">Reenviar enlace de verificación</button>
+      </form>
+      <div class="message" id="message" aria-live="polite"></div>
+      <a href="iniciar_sesion.html">Volver al inicio de sesión</a>
+    </main>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+    <script>
+      const params = new URLSearchParams(location.search);
+      const emailInput = document.getElementById('email');
+      const message = document.getElementById('message');
+      emailInput.value = params.get('email') || '';
+
+      supabaseClient.auth.getSession().then(({ data }) => {
+        if (data.session) window.location.replace('inicio.html');
+      });
+
+      document.getElementById('verifyForm').addEventListener('submit', async event => {
+        event.preventDefault();
+        message.textContent = 'Verificando...';
+        const { error } = await supabaseClient.auth.resend({ type: 'signup', email: emailInput.value.trim() });
+        message.textContent = error ? error.message : 'Enlace reenviado. Revisa tu correo.';
+      });
+    </script>
+  </body>
+</html>

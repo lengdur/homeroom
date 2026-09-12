@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Perfil</title>
+
+    <style>
+    body {
+        margin-left: 1;
+        font-family: Arial, sans-serif;
+        margin-top:0;
+        display: grid;
+        grid-template-columns: 20% 80%;
+    }
+    .sidebar {
+        height: 100vh;
+        width: 99%;
+        background-color: #ffffff;
+        padding-top: 20px;
+        border-right: 2px solid #090505;
+       }
+
+    .button_sidebar{
+        border: none;
+        border-radius: 5px;
+        height: 6vw;
+        width: 90%;
+        background-color: white;
+        font-size: 2vw;
+        padding: 1vw 2vw;
+        cursor: pointer;
+        margin: 0.5vw;
+        font-weight: bold;
+        display: grid;
+        align-items: center;
+    }
+
+    .profile{
+        text-align: center;
+        font-size: 2.5vw;
+        height: 5vw
+    }
+
+    .button_sidebar:hover{
+        transform: scale(1.08);
+        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+    }
+
+    .button_cerrar_sesion{
+        border: none;
+        border-radius: 5px;
+        height: 5vw;
+        width: 15%;
+        background-color: #ff4d4d;
+        font-size: 1.8vw;
+        padding: 1vw 2vw;
+        color: white;
+        position: absolute;
+        bottom: 2%;
+        cursor: pointer;
+        text-align: center;
+        margin: 2%;
+        }
+
+    .button_cerrar_sesion:hover{
+        transform: scale(1.08);
+        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+    }
+
+    .content{
+        margin: 5%;
+    }
+
+    .separador{
+        border: 1px solid #000;
+        margin: 10px 0;
+    }
+
+    .cambiar{
+        border-radius: 5px;
+        cursor: pointer;
+        border: none;
+    }
+
+    .cambiar:hover{
+        transform: scale(1.01);
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+    }
+
+    .temas{
+        position:absolute;
+        right:2%;
+        border-radius: 5px;
+    }
+
+
+    </style>
+</head>
+<body>
+<div class="sidebar">
+  <div class="profile">
+    <h2><!--Nombre del usuario--></h2>
+  </div>
+  <nav>
+    <button class="button_sidebar" onclick="mostrarSeccion('historial_solicitudes')">Historial de solicitudes</button>
+    <button class="button_sidebar" onclick="mostrarSeccion('seccion2')">boton 2</button>
+    <button class="button_sidebar" onclick="mostrarSeccion('seccion3')">boton 3</button>
+    <button class="button_sidebar" onclick="mostrarSeccion('modificar_perfil')">Modificar perfil</button>
+    <button class="button_sidebar" onclick="mostrarSeccion('mis_trabajos')">Mis trabajos</button>
+
+    <button class =button_cerrar_sesion onclick="cerrarSesion()">Cerrar sesión</button>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+    <script>
+        requireUser();
+        function cerrarSesion() {
+            signOutAndRedirect();
+        }
+    </script>
+  </nav>
+  <div>
+
+  </div>
+</div>
+
+<div class="content">
+    <div id="historial_solicitudes" class="seccion">
+        <h2>Historial de solicitudes</h2>
+        <hr class="separador">
+        <br>
+        Mis solicitudes:
+        <select id="temas" class="temas">
+            <option>Mates</option>
+            <option>Historia</option>
+            <option>Física/química</option>
+            <option>Lengua</option>
+            <option>Inglés</option>
+        </select>
+    </div>
+
+    <div id="seccion2" class="seccion">
+        <h2>Sección 2</h2>
+    </div>
+
+    <div id="seccion3" class="seccion">
+        <h2>Sección 3</h2>
+    </div>
+
+    <div id="modificar_perfil" class="seccion">
+        <h2>Modificar perfil</h2>
+        <hr class="separador">
+        <br>
+        Cambiar nombre de usuario: 
+        <input type="text" id="nuevo_nombre" placeholder="Nuevo nombre de usuario">
+        <button class="cambiar" onclick="cambiarNombre()">Cambiar</button>
+        <br>
+        <br>
+        Cambiar correo electrónico:
+        <input type="email" id="nuevo_correo" placeholder="Nuevo correo electrónico">
+        <button class="cambiar" onclick="cambiarCorreo()">Cambiar</button>
+        <br>
+        <br>
+        Cambiar contraseña:
+        <input type="password" id="nueva_contraseña" placeholder="Nueva contraseña">
+        <button class="cambiar" onclick="cambiarContraseña()">Cambiar</button>
+        <br>
+        <br>
+        Cambiar centro educativo:
+        <input type="text" id="nuevo_centro" placeholder="Nuevo centro educativo">
+        <button class="cambiar" onclick="cambiarCentro()">Cambiar</button>
+        <br>
+        <br>
+        Cambiar curso:
+        <input type="text" id="nuevo_curso" placeholder="Nuevo curso">
+        <button class="cambiar" onclick="cambiarCurso()">Cambiar</button>
+    </div>
+
+    <div id="mis_trabajos" class="seccion">
+        <h2>Mis trabajos</h2>
+        <hr class="separador">
+    </div>
+
+    <script>
+        function mostrarSeccion(id) {
+        document.querySelectorAll('.seccion').forEach(el => el.style.display = 'none');
+        document.getElementById(id).style.display = 'block';
+    }
+</script>
+</div>
+
+
+
+</body>
+</html>

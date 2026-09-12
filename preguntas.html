@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Preguntas</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        background:
+          linear-gradient(rgba(145, 120, 178, 0.08) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(145, 120, 178, 0.04) 1px, transparent 1px),
+          linear-gradient(135deg, #f8f2ff 0%, #f0e6ff 40%, #f5eefb 100%);
+        background-size: 28px 28px, 28px 28px, 100% 100%;
+        font-family: "Trebuchet MS", "Segoe UI", Arial, sans-serif;
+      }
+
+      .card {
+        width: min(90vw, 620px);
+        background: rgba(255, 255, 255, 0.76);
+        border: 2px solid #d8c4ef;
+        border-radius: 18px;
+        box-shadow: 0 12px 28px rgba(110, 85, 138, 0.12), inset 0 0 0 2px rgba(255,255,255,0.5);
+        padding: 30px 28px;
+        position: relative;
+      }
+
+      .btn-inicio {
+        position: absolute;
+        top: 16px;
+        left: 16px;
+        z-index: 2;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 10px 16px;
+        border-radius: 10px;
+        background: linear-gradient(135deg, #eadcff, #d8c4f2);
+        border: 2px solid rgba(170, 141, 211, 0.7);
+        color: #4f3d68;
+        text-decoration: none;
+        font-weight: 700;
+        box-shadow: 0 8px 18px rgba(170, 141, 211, 0.24);
+      }
+
+      .card::before {
+        content: "";
+        position: absolute;
+        inset: 10px 12px 10px 12px;
+        border: 1px solid rgba(150, 117, 181, 0.3);
+        border-radius: 12px;
+        pointer-events: none;
+      }
+
+      .header {
+        margin-bottom: 20px;
+        text-align: center;
+      }
+
+      h1 {
+        margin: 0 0 10px 0;
+        font-size: 2.15rem;
+        color: #5f4a7a;
+        letter-spacing: 1px;
+        text-shadow: 1px 1px 0 rgba(255,255,255,0.7);
+      }
+
+      .subtitle {
+        margin: 0;
+        color: #6c5a83;
+        font-size: 0.98rem;
+      }
+
+      label {
+        display: block;
+        margin-bottom: 10px;
+        font-weight: 700;
+        color: #5d476f;
+        letter-spacing: 0.4px;
+      }
+
+      input,
+      textarea {
+        width: 100%;
+        padding: 14px 16px;
+        border: 2px solid #d9c9f0;
+        border-radius: 12px;
+        background: linear-gradient(180deg, rgba(255,255,255,0.9), rgba(245,240,255,0.88));
+        font-size: 1rem;
+        color: #40314d;
+        outline: none;
+        box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.04);
+      }
+
+      input {
+        margin-bottom: 18px;
+      }
+
+      textarea {
+        min-height: 180px;
+        resize: vertical;
+      }
+
+      input:focus,
+      textarea:focus {
+        border-color: #c7a8eb;
+        box-shadow: 0 0 0 4px rgba(199, 168, 235, 0.18);
+      }
+
+      button {
+        margin-top: 20px;
+        width: 100%;
+        border: none;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #eadcff, #d8c4f2);
+        color: #4f3d68;
+        padding: 14px 18px;
+        font-size: 1rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+        box-shadow: 0 8px 18px rgba(170, 141, 211, 0.24);
+      }
+
+      button:hover {
+        transform: translateY(-1px);
+        opacity: 0.98;
+      }
+
+      .volver {
+        display: inline-block;
+        margin-top: 18px;
+        color: #695681;
+        text-decoration: none;
+        font-weight: 700;
+      }
+
+      .volver:hover {
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+  <body>
+    <a class="btn-inicio" href="inicio.html">← Inicio</a>
+
+    <div class="card">
+      <div class="header">
+        <h1>Haz tu pregunta</h1>
+        <p class="subtitle">Tu consulta se respondera en 48 horas</p>
+      </div>
+
+      <form id="preguntaForm">
+        <label for="pregunta">Escribe tu pregunta:</label>
+        <textarea id="pregunta" name="message" placeholder="Escribe aquí tu duda o consulta..." required></textarea>
+
+        <button type="submit">Enviar</button>
+      </form>
+
+      <a class="volver" href="inicio.html">Volver al inicio</a>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+    <script src="notificaciones.js"></script>
+    <script>
+      const form = document.getElementById('preguntaForm');
+
+      requireUser();
+
+      form.addEventListener('submit', async function (event) {
+        event.preventDefault();
+
+        const user = await requireUser();
+        const pregunta = document.getElementById('pregunta').value.trim();
+
+        if (!user) return;
+
+        if (!pregunta) {
+          showNotification('Escribe una pregunta antes de enviar.', 'error');
+          return;
+        }
+
+        try {
+          const { error } = await supabaseClient.from('preguntas').insert({ email: user.email, pregunta });
+          if (error) throw error;
+
+          form.reset();
+          showNotification('Tu pregunta se ha guardado correctamente.', 'success');
+        } catch (error) {
+          showNotification(error.message || 'No se pudo guardar la pregunta.', 'error');
+        }
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mis solicitudes</title>
+    <style>
+      * { box-sizing: border-box; }
+      body { margin: 0; min-height: 100vh; padding: 24px; background: linear-gradient(135deg, #fff9dc, #eaf2ff); font-family: "Trebuchet MS", "Segoe UI", sans-serif; color: #243746; }
+      .container { width: min(94vw, 800px); margin: 0 auto; padding: 34px; background: rgba(255,255,255,.9); border: 2px solid #d7e2e9; border-radius: 14px; box-shadow: 0 16px 35px rgba(50,70,80,.14); }
+      .back { display: inline-block; margin-bottom: 18px; color: #286675; font-weight: 700; }
+      h1 { margin: 0 0 8px; color: #285b68; }
+      .subtitle { margin: 0 0 26px; color: #607581; }
+      .tabs { display: flex; gap: 10px; margin-bottom: 10px; }
+      .tab { flex: 1; padding: 12px; border: 2px solid #c5dfe4; border-radius: 8px; background: white; color: #286675; font: inherit; font-weight: 700; cursor: pointer; }
+      .tab.active { background: #3f8992; color: white; }
+      .count { display: inline-block; min-width: 22px; margin-left: 4px; padding: 2px 6px; border-radius: 10px; background: rgba(255,255,255,.7); font-size: .8rem; }
+      .request { padding: 20px 0; border-top: 1px solid #d9e7e9; }
+      .request:first-child { border-top: 0; }
+      .request h2 { margin: 0 0 8px; color: #285b68; font-size: 1.2rem; }
+      .request p { margin: 7px 0; line-height: 1.45; }
+      .date { color: #6c7f87; font-size: .9rem; }
+      .file-link { display: inline-block; margin-top: 10px; color: #286675; font-weight: 700; }
+      .pending, .empty { color: #72828a; }
+      @media (max-width: 560px) { .container { padding: 24px 18px; } }
+    </style>
+  </head>
+  <body>
+    <main class="container">
+      <a class="back" href="inicio.html">← Volver al inicio</a>
+      <h1>Mis solicitudes</h1>
+      <p class="subtitle">Aquí solo aparecen tus solicitudes</p>
+      <nav class="tabs" aria-label="Estado de solicitudes">
+        <button class="tab active" type="button" data-status="en_curso">En curso <span class="count" id="activeCount">0</span></button>
+        <button class="tab" type="button" data-status="completada">Completadas <span class="count" id="completedCount">0</span></button>
+      </nav>
+      <section id="requestsList"></section>
+    </main>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+    <script>
+      const list = document.getElementById('requestsList');
+      const tabs = document.querySelectorAll('.tab');
+      let requests = [];
+      let selectedStatus = 'en_curso';
+
+      function escapeHtml(value) {
+        return String(value).replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' })[character]);
+      }
+
+      function renderRequests() {
+        const visibleRequests = requests.filter(request => (request.estado || 'en_curso') === selectedStatus);
+        list.innerHTML = visibleRequests.length ? '' : '<p class="empty">No tienes solicitudes en este apartado.</p>';
+        visibleRequests.forEach(request => {
+          const item = document.createElement('article');
+          item.className = 'request';
+          item.innerHTML = '<h2>' + escapeHtml(request.tema) + ' · ' + escapeHtml(request.tipo) + '</h2>'
+            + '<p><strong>Páginas:</strong> ' + escapeHtml(request.paginas) + '</p>'
+            + '<p><strong>Descripción:</strong> ' + escapeHtml(request.descripcion) + '</p>'
+            + '<p class="date">' + new Date(request.created_at).toLocaleString('es-ES') + '</p>'
+            + (request.archivo_url ? '<a class="file-link" href="' + supabaseClient.storage.from('archivos').getPublicUrl(request.archivo_url).data.publicUrl + '" target="_blank" rel="noopener">Descargar archivo</a>' : '<p class="pending">Archivo pendiente de subir.</p>');
+          list.appendChild(item);
+        });
+      }
+
+      async function loadRequests() {
+        const user = await requireUser();
+        if (!user) return;
+        const { data, error } = await supabaseClient.from('solicitudes').select('*').eq('email', user.email).order('created_at', { ascending: true });
+        if (error) throw error;
+        requests = data || [];
+        document.getElementById('activeCount').textContent = requests.filter(request => (request.estado || 'en_curso') === 'en_curso').length;
+        document.getElementById('completedCount').textContent = requests.filter(request => request.estado === 'completada').length;
+        renderRequests();
+      }
+
+      tabs.forEach(tab => tab.addEventListener('click', () => {
+        selectedStatus = tab.dataset.status;
+        tabs.forEach(currentTab => currentTab.classList.toggle('active', currentTab === tab));
+        renderRequests();
+      }));
+
+      loadRequests().catch(() => { list.innerHTML = '<p class="empty">No se pudieron cargar tus solicitudes.</p>'; });
+    </script>
+  </body>
+</html>

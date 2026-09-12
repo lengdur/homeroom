@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Panel de administración</title>
+    <style>
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        padding: 24px;
+        background:
+          linear-gradient(rgba(57, 91, 121, 0.07) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(57, 91, 121, 0.07) 1px, transparent 1px),
+          linear-gradient(135deg, #edf7f6, #d8eaf0);
+        background-size: 28px 28px, 28px 28px, 100% 100%;
+        font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+        color: #243746;
+      }
+
+      .panel {
+        width: min(94vw, 820px);
+        padding: 38px;
+        background: rgba(255, 255, 255, 0.88);
+        border: 2px solid #9dc9cf;
+        border-radius: 18px;
+        box-shadow: 0 16px 35px rgba(44, 78, 94, 0.16);
+      }
+
+      h1 { margin: 0; text-align: center; color: #285b68; }
+      .subtitle { margin: 10px 0 30px; text-align: center; color: #5c7180; }
+
+      .actions {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        gap: 16px;
+      }
+
+      .action {
+        width: 100%;
+        min-height: 84px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 18px;
+        border: 0;
+        border-radius: 10px;
+        background: linear-gradient(135deg, #3f8992, #286675);
+        color: white;
+        font: inherit;
+        font-weight: 700;
+        font-size: 1.05rem;
+        text-decoration: none;
+        cursor: pointer;
+        box-shadow: 0 8px 16px rgba(40, 102, 117, 0.2);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+      }
+
+      .action:hover { transform: translateY(-3px); box-shadow: 0 12px 22px rgba(40, 102, 117, 0.28); }
+      .secondary { margin-top: 22px; text-align: center; }
+      .secondary button { border: 0; background: transparent; color: #286675; font: inherit; cursor: pointer; text-decoration: underline; }
+
+      @media (max-width: 560px) {
+        .panel { padding: 26px 18px; }
+        .actions { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="panel">
+      <h1>Panel de administración</h1>
+      <p class="subtitle">Elige una sección para gestionar la plataforma</p>
+
+      <section class="actions" aria-label="Secciones de administración">
+        <a class="action" href="admin_textos.html">Administrar textos</a>
+        <a class="action" href="admin_exposiciones.html">Administrar exposiciones</a>
+        <button class="action" type="button" onclick="avisar('foro')">Administrar foro</button>
+        <a class="action" href="solicitudes_admin.html">Solicitudes</a>
+        <button class="action" type="button" onclick="avisar('gráficas')">Gráficas</button>
+        <button class="action" type="button" onclick="avisar('ingresos')">Ingresos</button>
+        <a class="action" href="inicio.html">Página de inicio</a>
+      </section>
+
+      <div class="secondary">
+        <button type="button" onclick="cerrarSesion()">Cerrar sesión</button>
+      </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+    <script src="notificaciones.js"></script>
+    <script>
+      requireAdmin();
+
+      function avisar(seccion) {
+        showNotification('La sección de ' + seccion + ' estará disponible próximamente.');
+      }
+
+      function cerrarSesion() {
+        signOutAndRedirect();
+      }
+    </script>
+  </body>
+</html>

@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Inicio</title>
+    <style>
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        background: #ffffff;
+        font-family: Arial, Helvetica, sans-serif;
+      }
+
+      .menu-toggle {
+        position: fixed;
+        top: 20px;
+        left: 20px;
+        z-index: 3;
+        width: 48px;
+        height: 48px;
+        border: 0;
+        border-radius: 10px;
+        background: #243746;
+        color: white;
+        font-size: 1.5rem;
+        cursor: pointer;
+        box-shadow: 0 8px 18px rgba(20, 20, 20, 0.2);
+      }
+
+      .menu-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 1;
+        background: rgba(20, 30, 38, 0.35);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.25s ease;
+      }
+
+      .sidebar {
+        position: fixed;
+        inset: 0 auto 0 0;
+        z-index: 2;
+        width: min(82vw, 310px);
+        display: flex;
+        flex-direction: column;
+        padding: 88px 22px 24px;
+        background: #f7fbfc;
+        box-shadow: 8px 0 24px rgba(20, 40, 50, 0.2);
+        transform: translateX(-100%);
+        transition: transform 0.25s ease;
+      }
+
+      .sidebar h2 {
+        margin: 0 0 26px;
+        color: #243746;
+      }
+
+      .sidebar a {
+        display: block;
+        padding: 13px 12px;
+        border-radius: 8px;
+        color: #243746;
+        text-decoration: none;
+        font-weight: 700;
+      }
+
+      .sidebar a:hover { background: #dcecf0; }
+
+      .logout {
+        width: 100%;
+        margin-top: auto;
+        padding: 13px 12px;
+        border: 0;
+        border-radius: 8px;
+        background: #d9534f;
+        color: white;
+        font: inherit;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      .menu-open .sidebar { transform: translateX(0); }
+      .menu-open .menu-overlay { opacity: 1; pointer-events: auto; }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(150px, 220px));
+        gap: 28px;
+        padding: 30px;
+      }
+
+      .tile {
+        position: relative;
+        display: block;
+        width: 220px;
+        height: 220px;
+        text-decoration: none;
+        color: #fff;
+        border-radius: 18px;
+        overflow: hidden;
+        box-shadow: 0 12px 28px rgba(20, 20, 20, 0.14);
+        transition: transform 0.35s ease, box-shadow 0.35s ease, filter 0.35s ease;
+      }
+
+      .tile::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: rgba(255, 255, 255, 0.12);
+        opacity: 0;
+        transition: opacity 0.35s ease;
+      }
+
+      .tile:hover {
+        transform: translateY(-12px) scale(1.04) rotate(-2deg);
+        box-shadow: 0 18px 36px rgba(0, 0, 0, 0.2);
+        filter: saturate(1.15);
+      }
+
+      .tile:hover::before {
+        opacity: 1;
+      }
+
+      .tile:nth-child(1) { background: linear-gradient(135deg, #ff9966, #ff5e62); }
+      .tile:nth-child(2) { background: linear-gradient(135deg, #00d2ff, #3a7bd5); }
+      .tile:nth-child(3) { background: linear-gradient(135deg, #7f7fd5, #86a8e7); }
+      .tile:nth-child(4) { background: linear-gradient(135deg, #11998e, #38ef7d); }
+
+      .content {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        padding: 20px;
+        z-index: 1;
+      }
+
+      .content span {
+        font-size: 2rem;
+        font-weight: 700;
+        letter-spacing: 1px;
+      }
+
+      .content small {
+        margin-top: 8px;
+        font-size: 0.85rem;
+        opacity: 0.9;
+      }
+    </style>
+  </head>
+  <body>
+    <button class="menu-toggle" type="button" aria-label="Abrir menú" aria-expanded="false" onclick="toggleMenu()">☰</button>
+    <div class="menu-overlay" onclick="toggleMenu()"></div>
+
+    <aside class="sidebar" aria-label="Menú lateral">
+      <h2>Menú</h2>
+      <a href="inicio.html">Inicio</a>
+      <a href="textos.html">Textos</a>
+      <a href="exposiciones.html">Exposiciones</a>
+      <a href="preguntas.html">Preguntas</a>
+      <a href="solicitudes.html">Mis solicitudes</a>
+      <a id="adminLink" href="admin.html" hidden>Administración</a>
+      <a href="mi_perfil.html">Mi perfil</a>
+      <button class="logout" type="button" onclick="cerrarSesion()">Cerrar sesión</button>
+    </aside>
+
+    <div class="grid">
+      <a class="tile" href="textos.html">
+        <div class="content">
+          <span>Textos</span>
+          <small>Solicita tu texto</small>
+        </div>
+      </a>
+
+      <a class="tile" href="exposiciones.html">
+        <div class="content">
+          <span>Exposiciones</span>
+          <small>Solicita tu exposición</small>
+        </div>
+      </a>
+
+      <a class="tile" href="preguntas.html">
+        <div class="content">
+          <span>Preguntas</span>
+          <small>Escribe tu duda</small>
+        </div>
+      </a>
+
+      <a class="tile" href="https://www.wikipedia.org" target="_blank" rel="noopener noreferrer">
+        <div class="content">
+          <span>Solicitudes</span>
+          <small>Resuleve tareas</small>
+        </div>
+      </a>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+    <script>
+      const menuToggle = document.querySelector('.menu-toggle');
+      const adminLink = document.getElementById('adminLink');
+
+      (async () => {
+        const profile = await getCurrentProfile();
+        if (!profile) { window.location.replace('iniciar_sesion.html'); return; }
+        const esAdministrador = profile.rango === 'admin';
+        adminLink.hidden = !esAdministrador;
+        adminLink.style.display = esAdministrador ? 'block' : 'none';
+      })();
+
+      function toggleMenu() {
+        const open = document.body.classList.toggle('menu-open');
+        menuToggle.setAttribute('aria-expanded', String(open));
+      }
+
+      function cerrarSesion() {
+        signOutAndRedirect();
+      }
+    </script>
+  </body>
+</html>

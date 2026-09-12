@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin - Gestionar Textos</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 28px;
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+            font-size: 14px;
+        }
+
+        input, textarea, select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+            transition: border-color 0.3s;
+        }
+
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 30px;
+        }
+
+        button {
+            flex: 1;
+            padding: 14px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-save {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-save:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-back {
+            background: #e0e0e0;
+            color: #333;
+        }
+
+        .btn-back:hover {
+            background: #d0d0d0;
+        }
+
+        .textos-list {
+            margin-top: 40px;
+            padding-top: 40px;
+            border-top: 2px solid #e0e0e0;
+        }
+
+        .textos-list h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 20px;
+        }
+
+        .texto-item {
+            background: #f5f5f5;
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .texto-info {
+            flex: 1;
+        }
+
+        .texto-info h3 {
+            margin: 0 0 4px;
+            color: #333;
+            font-size: 16px;
+        }
+
+        .texto-info p {
+            margin: 0;
+            color: #666;
+            font-size: 12px;
+        }
+
+        .btn-delete {
+            background: #ff6b6b;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+
+        .btn-delete:hover {
+            background: #ee5a52;
+        }
+
+        .alert {
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📝 Gestionar Textos</h1>
+
+        <div id="alertBox"></div>
+
+        <form id="textForm">
+            <div class="form-group">
+                <label for="tema">Tema</label>
+                <select id="tema" required>
+                    <option value="">Selecciona tema...</option>
+                    <option value="1">Mates</option>
+                    <option value="2">Lengua</option>
+                    <option value="3">Historia</option>
+                    <option value="4">Biología/Geología</option>
+                    <option value="5">Física/Química</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="titulo">Título</label>
+                <input type="text" id="titulo" placeholder="Ej: Historia de España" required />
+            </div>
+
+            <div class="form-group">
+                <label for="contenido">Contenido</label>
+                <textarea id="contenido" placeholder="Escribe el contenido del texto..."></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="archivo">Archivo (PDF, DOCX, TXT, etc.)</label>
+                <input type="file" id="archivo" />
+            </div>
+
+            <div class="button-group">
+                <button type="submit" class="btn-save">💾 Guardar Texto</button>
+                <button type="button" class="btn-back" onclick="window.location.href='admin.html'">← Volver</button>
+            </div>
+        </form>
+
+        <div class="textos-list">
+            <h2>Textos Activos</h2>
+            <div id="textosList"></div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+    <script>
+        requireAdmin();
+
+        const textForm = document.getElementById('textForm');
+        const alertBox = document.getElementById('alertBox');
+        const textosList = document.getElementById('textosList');
+        const temas = ['Mates', 'Lengua', 'Historia', 'Biología/Geología', 'Física/Química'];
+
+        function showAlert(message, type = 'success') {
+            alertBox.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+            setTimeout(() => {
+                alertBox.innerHTML = '';
+            }, 5000);
+        }
+
+        async function loadTextos() {
+            try {
+                const { data: textos, error } = await supabaseClient.from('textos').select('*').order('posicion');
+                if (error) throw error;
+
+                textosList.innerHTML = '';
+
+                if (textos && textos.length > 0) {
+                    textos.forEach(texto => {
+                        const div = document.createElement('div');
+                        div.className = 'texto-item';
+                        div.innerHTML = `
+                            <div class="texto-info">
+                                <h3>${temas[texto.posicion - 1] || 'Tema'}: ${texto.titulo}</h3>
+                                <p>${texto.contenido ? texto.contenido.substring(0, 50) + '...' : 'Sin contenido'}</p>
+                            </div>
+                            <button type="button" class="btn-delete" onclick="deleteTexto('${texto.id}')">Eliminar</button>
+                        `;
+                        textosList.appendChild(div);
+                    });
+                } else {
+                    textosList.innerHTML = '<p style="color: #999;">No hay textos guardados aún</p>';
+                }
+            } catch (err) {
+                console.error('Error al cargar textos:', err);
+            }
+        }
+
+        async function deleteTexto(id) {
+            if (!confirm('¿Estás seguro de que quieres eliminar este texto?')) return;
+
+            try {
+                const { error } = await supabaseClient.from('textos').delete().eq('id', id);
+                if (!error) {
+                    showAlert('Texto eliminado correctamente', 'success');
+                    loadTextos();
+                } else {
+                    showAlert(error.message, 'error');
+                }
+            } catch (err) {
+                showAlert('Error al eliminar: ' + err.message, 'error');
+            }
+        }
+
+        textForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const posicion = document.getElementById('tema').value;
+            const titulo = document.getElementById('titulo').value.trim();
+            const contenido = document.getElementById('contenido').value.trim();
+            const archivo = document.getElementById('archivo').files[0];
+
+            if (!posicion || !titulo) {
+                showAlert('Completa todos los campos obligatorios', 'error');
+                return;
+            }
+
+            try {
+                let archivoUrl = null;
+                if (archivo) {
+                    archivoUrl = 'textos/' + crypto.randomUUID() + '-' + archivo.name;
+                    const upload = await supabaseClient.storage.from('archivos').upload(archivoUrl, archivo);
+                    if (upload.error) throw upload.error;
+                }
+                const { error } = await supabaseClient.from('textos').upsert({
+                    posicion: Number(posicion), titulo, contenido,
+                    ...(archivoUrl ? { archivo_url: archivoUrl } : {})
+                }, { onConflict: 'posicion' });
+
+                if (!error) {
+                    showAlert('✅ Texto guardado correctamente', 'success');
+                    textForm.reset();
+                    loadTextos();
+                } else {
+                    showAlert(error.message, 'error');
+                }
+            } catch (err) {
+                showAlert('Error: ' + err.message, 'error');
+            }
+        });
+
+        loadTextos();
+    </script>
+</body>
+</html>

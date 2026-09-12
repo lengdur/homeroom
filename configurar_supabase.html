@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configurar Supabase</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 800px;
+            padding: 40px;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 16px;
+        }
+        
+        .steps {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .step {
+            display: flex;
+            gap: 20px;
+            padding: 20px;
+            background: #f5f5f5;
+            border-left: 4px solid #667eea;
+            border-radius: 8px;
+        }
+        
+        .step-number {
+            min-width: 40px;
+            width: 40px;
+            height: 40px;
+            background: #667eea;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 18px;
+        }
+        
+        .step-content {
+            flex: 1;
+        }
+        
+        .step-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+            font-size: 16px;
+        }
+        
+        .step-description {
+            color: #666;
+            line-height: 1.5;
+            font-size: 14px;
+        }
+        
+        code {
+            background: #e8e8e8;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 12px;
+        }
+        
+        .code-block {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 16px;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin-top: 12px;
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 12px;
+            line-height: 1.4;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 30px;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+        
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-secondary {
+            background: #e8e8e8;
+            color: #333;
+        }
+        
+        .btn-secondary:hover {
+            background: #d8d8d8;
+        }
+        
+        .alert {
+            background: #fffbea;
+            border-left: 4px solid #ffc107;
+            padding: 16px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            color: #856404;
+        }
+        
+        .alert-title {
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Configurar Base de Datos en Supabase</h1>
+        <p class="subtitle">Sigue estos pasos para crear las tablas necesarias</p>
+        
+        <div class="alert">
+            <div class="alert-title">⚠️ Importante</div>
+            <p>Si recibiste el error "permission denied for schema public", sigue estos pasos usando la interfaz de Supabase.</p>
+        </div>
+        
+        <div class="steps">
+            <div class="step">
+                <div class="step-number">1</div>
+                <div class="step-content">
+                    <div class="step-title">Ir a Supabase</div>
+                    <div class="step-description">Abre <code>https://supabase.com</code> e ingresa a tu proyecto <code>jtfqkiwfyynysyqrvmjz</code></div>
+                </div>
+            </div>
+            
+            <div class="step">
+                <div class="step-number">2</div>
+                <div class="step-content">
+                    <div class="step-title">Acceder a SQL Editor</div>
+                    <div class="step-description">En el menú izquierdo, haz clic en <strong>"SQL Editor"</strong></div>
+                </div>
+            </div>
+            
+            <div class="step">
+                <div class="step-number">3</div>
+                <div class="step-content">
+                    <div class="step-title">Crear nuevo Query</div>
+                    <div class="step-description">Haz clic en <strong>"New Query"</strong> (botón azul en la parte superior)</div>
+                </div>
+            </div>
+            
+            <div class="step">
+                <div class="step-number">4</div>
+                <div class="step-content">
+                    <div class="step-title">Copiar y ejecutar el SQL</div>
+                    <div class="step-description">Copia el siguiente código SQL y pégalo en el editor:</div>
+                    <div class="code-block">-- Crear tabla usuarios
+CREATE TABLE IF NOT EXISTS usuarios (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  email TEXT UNIQUE NOT NULL,
+    password TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Crear tabla preguntas
+CREATE TABLE IF NOT EXISTS preguntas (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  email TEXT NOT NULL,
+  pregunta TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  CONSTRAINT fk_usuarios FOREIGN KEY (email) REFERENCES usuarios(email)
+);
+
+-- Crear índices
+CREATE INDEX IF NOT EXISTS idx_usuarios_email ON usuarios(email);
+CREATE INDEX IF NOT EXISTS idx_preguntas_email ON preguntas(email);</div>
+                </div>
+            </div>
+            
+            <div class="step">
+                <div class="step-number">5</div>
+                <div class="step-content">
+                    <div class="step-title">Ejecutar SQL</div>
+                    <div class="step-description">Presiona <strong>Ctrl+Enter</strong> o haz clic en el botón <strong>"RUN"</strong> (parte superior derecha)</div>
+                </div>
+            </div>
+            
+            <div class="step">
+                <div class="step-number">6</div>
+                <div class="step-content">
+                    <div class="step-title">Verificar éxito</div>
+                    <div class="step-description">Si todo funciona, verás un mensaje de éxito y deberías ver las tablas <code>usuarios</code> y <code>preguntas</code> en el panel izquierdo bajo "Tables"</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="button-group">
+            <button class="btn btn-primary" onclick="abrirSupabase()">📱 Abrir Supabase</button>
+            <button class="btn btn-secondary" onclick="verificar()">✅ Verificar Tablas</button>
+        </div>
+    </div>
+    
+    <script src="notificaciones.js"></script>
+    <script>
+        function abrirSupabase() {
+            window.open('https://supabase.com/dashboard/project/jtfqkiwfyynysyqrvmjz/sql/new', '_blank');
+        }
+        
+        function verificar() {
+            showNotification('Ejecuta inutiles/supabase-schema.sql en el SQL Editor de Supabase y prueba iniciar_sesion.html.');
+        }
+    </script>
+</body>
+</html>
