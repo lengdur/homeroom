@@ -138,8 +138,12 @@
 
       @media (max-width: 620px) {
         .grid {
-          grid-template-columns: repeat(2, minmax(130px, 1fr));
+          grid-template-columns: 1fr;
         }
+
+        .container { width: min(94vw, 420px); padding: 24px 16px; }
+        .btn-inicio { position: static; margin-bottom: 12px; }
+        .modal-actions { flex-direction: column; }
       }
 
       .floating-btn {

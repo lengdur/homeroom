@@ -23,7 +23,12 @@
       .status-button { margin-top: 14px; background: #5b9b69; }
       .status-button.reopen { background: #8a9aa2; }
       .empty { color: #607581; }
-      @media (max-width: 560px) { .container { padding: 24px 18px; } .upload { align-items: stretch; flex-direction: column; } .upload input, .upload button { max-width: none; width: 100%; } }
+      @media (max-width: 560px) {
+        body { padding: 12px; }
+        .container { padding: 24px 18px; }
+        .upload { align-items: stretch; flex-direction: column; }
+        .upload input, .upload button { max-width: none; width: 100%; }
+      }
     </style>
   </head>
   <body>

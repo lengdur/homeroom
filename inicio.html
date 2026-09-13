@@ -90,16 +90,17 @@
 
       .grid {
         display: grid;
-        grid-template-columns: repeat(2, minmax(150px, 220px));
+        grid-template-columns: repeat(2, minmax(0, 220px));
         gap: 28px;
+        width: min(100%, 500px);
         padding: 30px;
       }
 
       .tile {
         position: relative;
         display: block;
-        width: 220px;
-        height: 220px;
+        width: 100%;
+        aspect-ratio: 1;
         text-decoration: none;
         color: #fff;
         border-radius: 18px;
@@ -154,6 +155,13 @@
         margin-top: 8px;
         font-size: 0.85rem;
         opacity: 0.9;
+      }
+
+      @media (max-width: 520px) {
+        body { padding: 76px 16px 24px; }
+        .grid { grid-template-columns: 1fr; gap: 18px; padding: 0; width: min(100%, 300px); }
+        .tile { aspect-ratio: 1.25; }
+        .content span { font-size: 1.6rem; }
       }
     </style>
   </head>

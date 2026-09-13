@@ -86,6 +86,12 @@
       button:hover {
         transform: translateY(-1px);
       }
+
+      @media (max-width: 420px) {
+        body { padding: 12px; }
+        .box { width: 100%; padding: 28px 18px 20px; }
+        h1 { font-size: 1.7rem; }
+      }
     </style>
   </head>
   <body>
@@ -120,7 +126,7 @@
         event.preventDefault();
 
         const email = document.getElementById('email').value.trim();
-        const password = document.getElementById('password').value.trim();
+        const password = document.getElementById('password').value;
         const centro_estudios = document.getElementById('centro').value.trim();
         const curso = document.getElementById('curso').value.trim();
 
@@ -145,6 +151,11 @@
           });
 
           if (error) throw error;
+          if (!data.user) throw new Error('Supabase no devolvió el usuario creado.');
+          if (data.user.identities && data.user.identities.length === 0) {
+            throw new Error('Ya existe una cuenta con ese correo. Inicia sesión o verifica el correo recibido.');
+          }
+
           let { error: profileError } = await supabaseClient.rpc('crear_perfil_registro', {
             p_email: email,
             p_centro_estudios: centro_estudios,

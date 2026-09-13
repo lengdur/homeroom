@@ -22,7 +22,12 @@
       .date { color: #6c7f87; font-size: .9rem; }
       .file-link { display: inline-block; margin-top: 10px; color: #286675; font-weight: 700; }
       .pending, .empty { color: #72828a; }
-      @media (max-width: 560px) { .container { padding: 24px 18px; } }
+      @media (max-width: 560px) {
+        body { padding: 12px; }
+        .container { padding: 24px 18px; }
+        .tabs { flex-direction: column; }
+        .tab { width: 100%; }
+      }
     </style>
   </head>
   <body>

@@ -156,6 +156,16 @@
             font-weight: 600;
             margin-bottom: 8px;
         }
+
+        @media (max-width: 600px) {
+            body { padding: 12px; }
+            .container { width: 100%; padding: 26px 18px; }
+            h1 { font-size: 24px; }
+            .step { flex-direction: column; gap: 12px; padding: 16px; }
+            .code-block { font-size: 11px; white-space: pre-wrap; overflow-wrap: anywhere; }
+            .button-group { flex-direction: column; }
+            .btn { width: 100%; }
+        }
     </style>
 </head>
 <body>
