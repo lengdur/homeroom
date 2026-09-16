@@ -39,7 +39,7 @@ async function requireUser(redirect = 'iniciar_sesion.html') {
 
 async function requireAdmin() {
   const profile = await getCurrentProfile();
-  if (!profile || profile.rango !== 'admin') {
+  if (!profile || !['admin', 'op'].includes(profile.rango)) {
     window.location.replace('inicio.html');
     return null;
   }
@@ -49,4 +49,27 @@ async function requireAdmin() {
 async function signOutAndRedirect() {
   await supabaseClient.auth.signOut();
   window.location.replace('iniciar_sesion.html');
+}
+
+function resolveStorageUrl(filePath) {
+  if (!filePath) return '';
+  if (/^https?:\/\//i.test(filePath)) return filePath;
+  if (filePath.startsWith('/')) return filePath;
+
+  const normalized = String(filePath).replace(/^\/+/, '').split('/').map(part => encodeURIComponent(part)).join('/');
+  return `${SUPABASE_URL}/storage/v1/object/public/archivos/${normalized}`;
+}
+
+async function getSignedStorageUrl(filePath, expiresInSeconds = 3600) {
+  if (!filePath) return '';
+  if (/^https?:\/\//i.test(filePath)) return filePath;
+  if (filePath.startsWith('/')) return filePath;
+
+  try {
+    const { data, error } = await supabaseClient.storage.from('archivos').createSignedUrl(filePath, expiresInSeconds);
+    if (error || !data?.signedUrl) return resolveStorageUrl(filePath);
+    return data.signedUrl;
+  } catch (error) {
+    return resolveStorageUrl(filePath);
+  }
 }

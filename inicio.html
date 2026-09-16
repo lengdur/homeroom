@@ -132,6 +132,7 @@
       .tile:nth-child(2) { background: linear-gradient(135deg, #00d2ff, #3a7bd5); }
       .tile:nth-child(3) { background: linear-gradient(135deg, #7f7fd5, #86a8e7); }
       .tile:nth-child(4) { background: linear-gradient(135deg, #11998e, #38ef7d); }
+      .tile:nth-child(5) { background: linear-gradient(135deg, #f6b73c, #e67e22); }
 
       .content {
         position: absolute;
@@ -172,10 +173,10 @@
     <aside class="sidebar" aria-label="Menú lateral">
       <h2>Menú</h2>
       <a href="inicio.html">Inicio</a>
-      <a href="textos.html">Textos</a>
-      <a href="exposiciones.html">Exposiciones</a>
+      <a href="textos.html">Apuntes</a>
+      <a href="exposiciones.html">Esquemas</a>
+      <a href="archivos.html">Archivos</a>
       <a href="preguntas.html">Preguntas</a>
-      <a href="solicitudes.html">Mis solicitudes</a>
       <a id="adminLink" href="admin.html" hidden>Administración</a>
       <a href="mi_perfil.html">Mi perfil</a>
       <button class="logout" type="button" onclick="cerrarSesion()">Cerrar sesión</button>
@@ -184,29 +185,36 @@
     <div class="grid">
       <a class="tile" href="textos.html">
         <div class="content">
-          <span>Textos</span>
-          <small>Solicita tu texto</small>
+          <span>Apuntes</span>
+          <small>Solicita los apuntes del tema</small>
         </div>
       </a>
 
       <a class="tile" href="exposiciones.html">
         <div class="content">
-          <span>Exposiciones</span>
-          <small>Solicita tu exposición</small>
+          <span>Esquemas</span>
+          <small>Solicita los esquemas del tema</small>
+        </div>
+      </a>
+
+      <a class="tile" href="archivos.html">
+        <div class="content">
+          <span>Archivos</span>
+          <small>Consulta el material disponible</small>
         </div>
       </a>
 
       <a class="tile" href="preguntas.html">
         <div class="content">
           <span>Preguntas</span>
-          <small>Escribe tu duda</small>
+          <small>Pidenos lo que quieras</small>
         </div>
       </a>
 
-      <a class="tile" href="https://www.wikipedia.org" target="_blank" rel="noopener noreferrer">
+      <a id="requestsAdminTile" class="tile" href="solicitudes_admin.html" hidden>
         <div class="content">
           <span>Solicitudes</span>
-          <small>Resuleve tareas</small>
+          <small>Gestiona las solicitudes</small>
         </div>
       </a>
     </div>
@@ -216,13 +224,16 @@
     <script>
       const menuToggle = document.querySelector('.menu-toggle');
       const adminLink = document.getElementById('adminLink');
+      const requestsAdminTile = document.getElementById('requestsAdminTile');
 
       (async () => {
         const profile = await getCurrentProfile();
         if (!profile) { window.location.replace('iniciar_sesion.html'); return; }
-        const esAdministrador = profile.rango === 'admin';
+        const esAdministrador = ['admin', 'op'].includes(profile.rango);
         adminLink.hidden = !esAdministrador;
         adminLink.style.display = esAdministrador ? 'block' : 'none';
+        requestsAdminTile.hidden = !esAdministrador;
+        requestsAdminTile.style.display = esAdministrador ? 'block' : 'none';
       })();
 
       function toggleMenu() {
@@ -234,5 +245,6 @@
         signOutAndRedirect();
       }
     </script>
+    <script src="proteccion-interfaz.js"></script>
   </body>
 </html>

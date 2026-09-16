@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Admin - Gestionar Textos</title>
+    <title>Admin - Gestionar apuntes</title>
     <style>
         * {
             box-sizing: border-box;
@@ -186,7 +186,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>📝 Gestionar Textos</h1>
+        <h1>📝 Gestionar apuntes</h1>
 
         <div id="alertBox"></div>
 
@@ -210,7 +210,7 @@
 
             <div class="form-group">
                 <label for="contenido">Contenido</label>
-                <textarea id="contenido" placeholder="Escribe el contenido del texto..."></textarea>
+                <textarea id="contenido" placeholder="Escribe el contenido del apunte..."></textarea>
             </div>
 
             <div class="form-group">
@@ -219,13 +219,13 @@
             </div>
 
             <div class="button-group">
-                <button type="submit" class="btn-save">💾 Guardar Texto</button>
+                <button type="submit" class="btn-save">💾 Guardar apunte</button>
                 <button type="button" class="btn-back" onclick="window.location.href='admin.html'">← Volver</button>
             </div>
         </form>
 
         <div class="textos-list">
-            <h2>Textos Activos</h2>
+            <h2>Apuntes activos</h2>
             <div id="textosList"></div>
         </div>
     </div>
@@ -268,7 +268,7 @@
                         textosList.appendChild(div);
                     });
                 } else {
-                    textosList.innerHTML = '<p style="color: #999;">No hay textos guardados aún</p>';
+                    textosList.innerHTML = '<p style="color: #999;">No hay apuntes guardados aún</p>';
                 }
             } catch (err) {
                 console.error('Error al cargar textos:', err);
@@ -276,12 +276,12 @@
         }
 
         async function deleteTexto(id) {
-            if (!confirm('¿Estás seguro de que quieres eliminar este texto?')) return;
+            if (!confirm('¿Estás seguro de que quieres eliminar este apunte?')) return;
 
             try {
                 const { error } = await supabaseClient.from('textos').delete().eq('id', id);
                 if (!error) {
-                    showAlert('Texto eliminado correctamente', 'success');
+                    showAlert('Apunte eliminado correctamente', 'success');
                     loadTextos();
                 } else {
                     showAlert(error.message, 'error');
@@ -298,6 +298,7 @@
             const titulo = document.getElementById('titulo').value.trim();
             const contenido = document.getElementById('contenido').value.trim();
             const archivo = document.getElementById('archivo').files[0];
+            const temaNombre = temas[Number(posicion) - 1] || 'General';
 
             if (!posicion || !titulo) {
                 showAlert('Completa todos los campos obligatorios', 'error');
@@ -310,6 +311,16 @@
                     archivoUrl = 'textos/' + crypto.randomUUID() + '-' + archivo.name;
                     const upload = await supabaseClient.storage.from('archivos').upload(archivoUrl, archivo);
                     if (upload.error) throw upload.error;
+
+                    const { error: fileError } = await supabaseClient.from('archivos').insert({
+                        titulo,
+                        tema: temaNombre,
+                        tipo: 'texto',
+                        archivo_url: archivoUrl,
+                        nombre_archivo: archivo.name
+                    });
+
+                    if (fileError) throw fileError;
                 }
                 const { error } = await supabaseClient.from('textos').upsert({
                     posicion: Number(posicion), titulo, contenido,
@@ -317,7 +328,7 @@
                 }, { onConflict: 'posicion' });
 
                 if (!error) {
-                    showAlert('✅ Texto guardado correctamente', 'success');
+                    showAlert('✅ Apunte guardado correctamente', 'success');
                     textForm.reset();
                     loadTextos();
                 } else {
@@ -330,5 +341,6 @@
 
         loadTextos();
     </script>
+    <script src="proteccion-interfaz.js"></script>
 </body>
 </html>

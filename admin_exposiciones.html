@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Admin - Gestionar Exposiciones</title>
+    <title>Admin - Gestionar esquemas</title>
     <style>
       * { box-sizing: border-box; }
 
@@ -60,7 +60,7 @@
   </head>
   <body>
     <main class="container">
-      <h1>Gestionar Exposiciones</h1>
+      <h1>Gestionar esquemas</h1>
       <div id="alertBox" aria-live="polite"></div>
 
       <form id="exposicionForm">
@@ -83,7 +83,7 @@
 
         <div class="form-group">
           <label for="contenido">Contenido</label>
-          <textarea id="contenido" placeholder="Escribe el contenido de la exposición..."></textarea>
+          <textarea id="contenido" placeholder="Escribe el contenido del esquema..."></textarea>
         </div>
 
         <div class="form-group">
@@ -92,13 +92,13 @@
         </div>
 
         <div class="button-group">
-          <button class="btn-save" type="submit">Guardar exposición</button>
+          <button class="btn-save" type="submit">Guardar esquema</button>
           <button class="btn-back" type="button" onclick="window.location.href='admin.html'">Volver</button>
         </div>
       </form>
 
       <section class="exposiciones-list">
-        <h2>Exposiciones activas</h2>
+        <h2>Esquemas activos</h2>
         <div id="exposicionesList"></div>
       </section>
     </main>
@@ -121,7 +121,7 @@
       async function loadExposiciones() {
         const { data: exposiciones, error } = await supabaseClient.from('exposiciones').select('*').order('posicion');
         if (error) throw error;
-        list.innerHTML = exposiciones.length ? '' : '<p>No hay exposiciones guardadas aún.</p>';
+        list.innerHTML = exposiciones.length ? '' : '<p>No hay esquemas guardados aún.</p>';
         exposiciones.forEach(exposicion => {
           const item = document.createElement('div');
           item.className = 'exposicion-item';
@@ -132,11 +132,11 @@
       }
 
       async function deleteExposicion(id) {
-        if (!confirm('¿Quieres eliminar esta exposición?')) return;
+        if (!confirm('¿Quieres eliminar este esquema?')) return;
         const { error } = await supabaseClient.from('exposiciones').delete().eq('id', id);
-        if (error) { showAlert(error.message || 'No se pudo eliminar la exposición.'); return; }
+        if (error) { showAlert(error.message || 'No se pudo eliminar el esquema.'); return; }
         await loadExposiciones();
-        showAlert('Exposición eliminada correctamente.');
+        showAlert('Esquema eliminado correctamente.');
       }
 
       form.addEventListener('submit', async event => {
@@ -144,14 +144,50 @@
         const posicion = document.getElementById('tema').value;
         const titulo = document.getElementById('titulo').value.trim();
         const contenido = document.getElementById('contenido').value.trim();
-        const { error } = await supabaseClient.from('exposiciones').upsert({ posicion: Number(posicion), titulo, contenido }, { onConflict: 'posicion' });
-        if (error) { showAlert(error.message || 'No se pudo guardar la exposición.'); return; }
-        form.reset();
-        await loadExposiciones();
-        showAlert('Exposición guardada correctamente en Supabase.');
+        const archivo = document.getElementById('archivo').files[0];
+        const temaNombre = temas[Number(posicion) - 1] || 'General';
+
+        if (!posicion || !titulo) {
+          showAlert('Completa el tema y el título.');
+          return;
+        }
+
+        try {
+          let archivoUrl = null;
+          if (archivo) {
+            archivoUrl = 'esquemas/' + crypto.randomUUID() + '-' + archivo.name;
+            const { error: uploadError } = await supabaseClient.storage.from('archivos').upload(archivoUrl, archivo);
+            if (uploadError) throw uploadError;
+
+            const { error: fileError } = await supabaseClient.from('archivos').insert({
+              titulo,
+              tema: temaNombre,
+              tipo: 'exposicion',
+              archivo_url: archivoUrl,
+              nombre_archivo: archivo.name
+            });
+
+            if (fileError) throw fileError;
+          }
+
+          const { error } = await supabaseClient.from('exposiciones').upsert({
+            posicion: Number(posicion),
+            titulo,
+            contenido,
+            ...(archivoUrl ? { archivo_url: archivoUrl } : {})
+          }, { onConflict: 'posicion' });
+
+          if (error) throw error;
+          form.reset();
+          await loadExposiciones();
+          showAlert('Esquema guardado correctamente en Supabase.');
+        } catch (error) {
+          showAlert(error.message || 'No se pudo guardar el esquema.');
+        }
       });
 
       loadExposiciones().catch(error => showAlert(error.message));
     </script>
+    <script src="proteccion-interfaz.js"></script>
   </body>
 </html>

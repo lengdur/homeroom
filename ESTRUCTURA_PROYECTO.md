@@ -23,6 +23,7 @@
 - `exposiciones.html`: muestra las exposiciones guardadas en Supabase y permite solicitar una exposición.
 - `admin_exposiciones.html`: crea, actualiza y elimina exposiciones por tema.
 - `preguntas.html`: permite enviar preguntas asociadas al usuario.
+- `archivos.html`: biblioteca de archivos filtrable por tema y por tipo; los administradores pueden subir material.
 
 ### Solicitudes
 - `solicitudes.html`: menú del usuario con solicitudes `En curso` y `Completadas`.
@@ -39,6 +40,7 @@
 - `preguntas`: preguntas asociadas al correo del usuario.
 - `textos`: título, contenido, posición y archivo opcional.
 - `exposiciones`: título, contenido, posición y archivo opcional.
+- `archivos`: metadatos de los archivos de la biblioteca, con tema y tipo (`texto` o `exposicion`).
 - `solicitudes`: usuario, tipo, tema, número de páginas, descripción, archivo y estado (`en_curso` o `completada`).
 
 ## Publicación sin servidor local

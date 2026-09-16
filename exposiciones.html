@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Exposiciones</title>
+    <title>Esquemas</title>
     <style>
       * {
         box-sizing: border-box;
@@ -91,6 +91,40 @@
         transition: transform 0.25s ease, box-shadow 0.25s ease;
         text-align: center;
         padding: 16px;
+        overflow: hidden;
+      }
+
+      .card.has-preview {
+        color: white;
+      }
+
+      .card.has-preview::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(135deg, rgba(38, 94, 53, 0.72), rgba(18, 64, 38, 0.52));
+        z-index: 0;
+      }
+
+      .card-preview {
+        position: absolute;
+        inset: 0;
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        filter: saturate(1.1) contrast(1.04) brightness(0.75);
+        z-index: 0;
+      }
+
+      .card-preview.file-fallback {
+        display: grid;
+        place-items: center;
+        font-size: 0.95rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        font-weight: 800;
+        background: linear-gradient(135deg, rgba(49, 117, 73, 0.85), rgba(34, 89, 50, 0.68));
+        color: white;
       }
 
       .card-description {
@@ -162,6 +196,60 @@
         transform: translateY(-1px);
       }
 
+      .request-history {
+        margin-top: 28px;
+        background: rgba(255, 255, 255, 0.72);
+        border: 2px solid rgba(108, 165, 123, 0.35);
+        border-radius: 16px;
+        padding: 20px;
+      }
+
+      .request-history h2 {
+        margin: 0 0 16px;
+        color: #285c33;
+      }
+
+      .request-history-list {
+        display: grid;
+        gap: 12px;
+      }
+
+      .request-group + .request-group {
+        margin-top: 24px;
+      }
+
+      .request-group h3 {
+        margin: 0 0 10px;
+        color: #2f5d3b;
+        font-size: 1rem;
+      }
+
+      .request-entry {
+        padding: 12px 14px;
+        border-radius: 10px;
+        background: #eefaf0;
+        border: 1px solid #d0ebd6;
+      }
+
+      .request-entry strong {
+        color: #285c33;
+      }
+
+      .request-entry p {
+        margin: 6px 0;
+        color: #2f5d3b;
+      }
+
+      .request-entry .status {
+        display: inline-block;
+        padding: 4px 8px;
+        border-radius: 999px;
+        font-size: 0.72rem;
+        font-weight: 700;
+        background: #dff7e2;
+        color: #285c33;
+      }
+
       .modal {
         position: fixed;
         inset: 0;
@@ -207,18 +295,20 @@
     <a class="btn-inicio" href="inicio.html">← Inicio</a>
 
     <div class="container">
-      <h1>Exposiciones</h1>
+      <h1>Esquemas</h1>
 
       <div class="grid" id="exposicionesGrid">
-        <p>Cargando exposiciones...</p>
+        <p>Cargando esquemas...</p>
       </div>
+
+      <div class="request-history" id="userRequestsHistory" aria-live="polite"></div>
     </div>
 
-    <button class="floating-btn" type="button" onclick="openRequestModal()">📬 Solicitar exposición</button>
+    <button class="floating-btn" type="button" onclick="openRequestModal()">📬 Solicitar esquemas</button>
 
     <div id="requestModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="requestTitle">
       <form id="requestForm" class="modal-content">
-        <h2 id="requestTitle">Solicitar exposición</h2>
+        <h2 id="requestTitle">Solicitar esquemas</h2>
         <label for="requestTheme">Tema</label>
         <select id="requestTheme" required>
           <option value="">Selecciona un tema...</option>
@@ -228,8 +318,8 @@
           <option>Biología/Geología</option>
           <option>Física/Química</option>
         </select>
-        <label for="requestPages">Número de páginas</label>
-        <input id="requestPages" type="number" min="1" max="1000" required />
+        <label for="requestPages">Punto del tema</label>
+        <input id="requestPages" type="number" min="1" max="30" required />
         <label for="requestDescription">Breve descripción</label>
         <textarea id="requestDescription" maxlength="500" required></textarea>
         <div class="modal-actions">
@@ -253,16 +343,32 @@
 
           grid.innerHTML = '';
           if (!exposiciones.length) {
-            grid.innerHTML = '<p>No hay exposiciones disponibles.</p>';
+            grid.innerHTML = '<p>No hay esquemas disponibles.</p>';
             return;
           }
 
-          exposiciones.forEach(exposicion => {
+          for (const exposicion of exposiciones) {
             const card = document.createElement('a');
             card.className = 'card';
-            const fileUrl = exposicion.archivo_url ? supabaseClient.storage.from('archivos').getPublicUrl(exposicion.archivo_url).data.publicUrl : '';
+            const fileUrl = exposicion.archivo_url ? await getSignedStorageUrl(exposicion.archivo_url) : '';
             card.href = fileUrl || '#';
             card.target = exposicion.archivo_url ? '_blank' : '_self';
+
+            if (fileUrl) {
+              const isImage = /\.(png|jpe?g|gif|webp|bmp|svg|avif)$/i.test(String(exposicion.archivo_url));
+              const preview = document.createElement('div');
+              preview.className = isImage ? 'card-preview' : 'card-preview file-fallback';
+
+              if (isImage) {
+                preview.style.backgroundImage = "url('" + fileUrl + "')";
+              } else {
+                const ext = String(exposicion.archivo_url).split('?')[0].split('/').pop() || 'archivo';
+                preview.textContent = ext.includes('.') ? ext.split('.').pop().toUpperCase() : 'FILE';
+              }
+              card.appendChild(preview);
+              card.classList.add('has-preview');
+            }
+
             const title = document.createElement('span');
             title.textContent = exposicion.titulo;
             const description = document.createElement('span');
@@ -270,14 +376,64 @@
             description.textContent = exposicion.contenido || 'Sin descripción disponible.';
             card.append(title, description);
             grid.appendChild(card);
-          });
+          }
         } catch (error) {
-          grid.innerHTML = '<p>No se pudieron cargar las exposiciones.</p>';
+          grid.innerHTML = '<p>No se pudieron cargar los esquemas.</p>';
           console.error(error);
         }
       }
 
+      function escapeHtml(value) {
+        return String(value ?? '').replace(/[&<>\"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '\"': '&quot;', "'": '&#039;' })[character]);
+      }
+
+      async function loadUserRequestsHistory() {
+        const container = document.getElementById('userRequestsHistory');
+        const user = await requireUser();
+        if (!user) return;
+
+        const { data, error } = await supabaseClient
+          .from('solicitudes')
+          .select('*')
+          .eq('email', user.email)
+          .eq('tipo', 'exposicion')
+          .order('created_at', { ascending: false });
+
+        if (error) {
+          container.innerHTML = '<h2>Solicitudes previas</h2><p>No se pudieron cargar tus solicitudes.</p>';
+          return;
+        }
+
+        if (!data || !data.length) {
+          container.innerHTML = '<h2>Solicitudes previas</h2><p>Aún no tienes solicitudes de esquemas.</p>';
+          return;
+        }
+
+        const entries = await Promise.all(data.map(async request => {
+          const fileUrl = request.archivo_url ? await getSignedStorageUrl(request.archivo_url) : '';
+          return `
+            <div class="request-entry">
+              <strong>${escapeHtml(request.tema || 'Sin tema')}</strong>
+              <p>Páginas: ${escapeHtml(request.paginas || '—')}</p>
+              <p>Descripción: ${escapeHtml(request.descripcion || 'Sin descripción')}</p>
+              ${fileUrl ? '<p><a href="' + fileUrl + '" target="_blank" rel="noopener">Ver archivo</a></p>' : '<p>Archivo pendiente.</p>'}
+            </div>
+          `;
+        }));
+
+        const activeEntries = entries.filter((entry, index) => (data[index].estado || 'en_curso') !== 'completada');
+        const completedEntries = entries.filter((entry, index) => data[index].estado === 'completada');
+        container.innerHTML = '<h2>Solicitudes previas</h2>'
+          + '<section class="request-group"><h3>En curso</h3><div class="request-history-list">'
+          + (activeEntries.join('') || '<p>No tienes solicitudes en curso.</p>')
+          + '</div></section>'
+          + '<section class="request-group"><h3>Completadas</h3><div class="request-history-list">'
+          + (completedEntries.join('') || '<p>No tienes solicitudes completadas.</p>')
+          + '</div></section>';
+      }
+
       loadExposiciones();
+      loadUserRequestsHistory();
 
       const requestModal = document.getElementById('requestModal');
       const requestForm = document.getElementById('requestForm');
@@ -301,5 +457,6 @@
         showNotification('Solicitud enviada correctamente.', 'success');
       });
     </script>
+    <script src="proteccion-interfaz.js"></script>
   </body>
 </html>

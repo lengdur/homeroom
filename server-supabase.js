@@ -55,6 +55,18 @@ function getSession(req) {
   return sessionCookie ? sessions.get(sessionCookie.slice('sessionId='.length)) : null;
 }
 
+async function getAuthenticatedEmail(req) {
+  const sessionEmail = getSession(req)?.email;
+  if (sessionEmail) return sessionEmail;
+
+  const authorization = req.headers.authorization || '';
+  const accessToken = authorization.startsWith('Bearer ') ? authorization.slice(7) : '';
+  if (!accessToken) return null;
+
+  const { data, error } = await supabase.auth.getUser(accessToken);
+  return error ? null : data.user?.email || null;
+}
+
 async function isAdmin(email) {
   if (!email) return false;
   const { data } = await supabase
@@ -280,7 +292,7 @@ app.post('/api/solicitudes/:id/archivo', upload.single('archivo'), async (req, r
   if (!req.file) return res.status(400).json({ success: false, message: 'Selecciona un archivo.' });
 
   try {
-    if (!(await isAdmin(getSession(req)?.email))) {
+    if (!(await isAdmin(await getAuthenticatedEmail(req)))) {
       fs.unlinkSync(req.file.path);
       return res.status(403).json({ success: false, message: 'No tienes permisos de administrador.' });
     }
@@ -571,7 +583,7 @@ app.get('/textos', async (req, res) => {
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Textos</title>
+    <title>Apuntes</title>
     <style>
       * {
         box-sizing: border-box;
@@ -750,14 +762,14 @@ app.get('/textos', async (req, res) => {
     <a class="btn-inicio" href="inicio.html">← Inicio</a>
 
     <div class="container">
-      <h1>Textos</h1>
+      <h1>Apuntes</h1>
 
       <div class="grid">
         ${cardsHTML}
       </div>
     </div>
 
-    <button class="floating-btn" onclick="alert('📧 Solicitud de texto enviada. Nos pondremos en contacto pronto.')">📬 Solicitar texto</button>
+    <button class="floating-btn" onclick="alert('📧 Solicitud de apunte enviada. Nos pondremos en contacto pronto.')">📬 Solicitar apunte</button>
   </body>
 </html>`;
 

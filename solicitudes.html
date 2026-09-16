@@ -11,81 +11,83 @@
       .back { display: inline-block; margin-bottom: 18px; color: #286675; font-weight: 700; }
       h1 { margin: 0 0 8px; color: #285b68; }
       .subtitle { margin: 0 0 26px; color: #607581; }
-      .tabs { display: flex; gap: 10px; margin-bottom: 10px; }
-      .tab { flex: 1; padding: 12px; border: 2px solid #c5dfe4; border-radius: 8px; background: white; color: #286675; font: inherit; font-weight: 700; cursor: pointer; }
-      .tab.active { background: #3f8992; color: white; }
-      .count { display: inline-block; min-width: 22px; margin-left: 4px; padding: 2px 6px; border-radius: 10px; background: rgba(255,255,255,.7); font-size: .8rem; }
-      .request { padding: 20px 0; border-top: 1px solid #d9e7e9; }
-      .request:first-child { border-top: 0; }
-      .request h2 { margin: 0 0 8px; color: #285b68; font-size: 1.2rem; }
-      .request p { margin: 7px 0; line-height: 1.45; }
-      .date { color: #6c7f87; font-size: .9rem; }
-      .file-link { display: inline-block; margin-top: 10px; color: #286675; font-weight: 700; }
-      .pending, .empty { color: #72828a; }
-      @media (max-width: 560px) {
-        body { padding: 12px; }
-        .container { padding: 24px 18px; }
-        .tabs { flex-direction: column; }
-        .tab { width: 100%; }
-      }
+      .request-group + .request-group { margin-top: 28px; }
+      .request-group h2 { margin: 0 0 12px; color: #285b68; font-size: 1.25rem; }
+      .request-list { display: grid; gap: 12px; }
+      .request { padding: 16px; border: 1px solid #d9e7e9; border-radius: 10px; background: #f8fcfc; }
+      .request h3 { margin: 0 0 8px; color: #285b68; font-size: 1.05rem; }
+      .request p { margin: 6px 0; line-height: 1.45; }
+      .file-link { display: inline-block; margin-top: 8px; color: #286675; font-weight: 700; }
+      .empty { color: #72828a; }
+      @media (max-width: 560px) { body { padding: 12px; } .container { padding: 24px 18px; } }
     </style>
   </head>
   <body>
     <main class="container">
       <a class="back" href="inicio.html">← Volver al inicio</a>
       <h1>Mis solicitudes</h1>
-      <p class="subtitle">Aquí solo aparecen tus solicitudes</p>
-      <nav class="tabs" aria-label="Estado de solicitudes">
-        <button class="tab active" type="button" data-status="en_curso">En curso <span class="count" id="activeCount">0</span></button>
-        <button class="tab" type="button" data-status="completada">Completadas <span class="count" id="completedCount">0</span></button>
-      </nav>
-      <section id="requestsList"></section>
+      <p class="subtitle">Tus solicitudes ordenadas de más reciente a más antigua.</p>
+      <div id="requestsContent"><p class="empty">Cargando solicitudes...</p></div>
     </main>
+
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabase-config.js"></script>
     <script>
-      const list = document.getElementById('requestsList');
-      const tabs = document.querySelectorAll('.tab');
-      let requests = [];
-      let selectedStatus = 'en_curso';
+      const requestsContent = document.getElementById('requestsContent');
 
       function escapeHtml(value) {
-        return String(value).replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' })[character]);
-      }
-
-      function renderRequests() {
-        const visibleRequests = requests.filter(request => (request.estado || 'en_curso') === selectedStatus);
-        list.innerHTML = visibleRequests.length ? '' : '<p class="empty">No tienes solicitudes en este apartado.</p>';
-        visibleRequests.forEach(request => {
-          const item = document.createElement('article');
-          item.className = 'request';
-          item.innerHTML = '<h2>' + escapeHtml(request.tema) + ' · ' + escapeHtml(request.tipo) + '</h2>'
-            + '<p><strong>Páginas:</strong> ' + escapeHtml(request.paginas) + '</p>'
-            + '<p><strong>Descripción:</strong> ' + escapeHtml(request.descripcion) + '</p>'
-            + '<p class="date">' + new Date(request.created_at).toLocaleString('es-ES') + '</p>'
-            + (request.archivo_url ? '<a class="file-link" href="' + supabaseClient.storage.from('archivos').getPublicUrl(request.archivo_url).data.publicUrl + '" target="_blank" rel="noopener">Descargar archivo</a>' : '<p class="pending">Archivo pendiente de subir.</p>');
-          list.appendChild(item);
-        });
+        return String(value ?? '').replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' })[character]);
       }
 
       async function loadRequests() {
         const user = await requireUser();
         if (!user) return;
-        const { data, error } = await supabaseClient.from('solicitudes').select('*').eq('email', user.email).order('created_at', { ascending: true });
+
+        const { data, error } = await supabaseClient
+          .from('solicitudes')
+          .select('*')
+          .eq('email', user.email)
+          .order('created_at', { ascending: false });
+
         if (error) throw error;
-        requests = data || [];
-        document.getElementById('activeCount').textContent = requests.filter(request => (request.estado || 'en_curso') === 'en_curso').length;
-        document.getElementById('completedCount').textContent = requests.filter(request => request.estado === 'completada').length;
-        renderRequests();
+        if (!data || !data.length) {
+          requestsContent.innerHTML = '<p class="empty">Aún no tienes solicitudes.</p>';
+          return;
+        }
+
+        const entries = await Promise.all(data.map(async request => {
+          const fileUrl = request.archivo_url ? await getSignedStorageUrl(request.archivo_url) : '';
+          const typeLabel = request.tipo === 'exposicion' ? 'Esquema' : 'Apunte';
+          return `
+            <article class="request">
+              <h3>${escapeHtml(request.tema || 'Sin tema')} · ${typeLabel}</h3>
+              <p><strong>Páginas:</strong> ${escapeHtml(request.paginas || '—')}</p>
+              <p><strong>Descripción:</strong> ${escapeHtml(request.descripcion || 'Sin descripción')}</p>
+              <p><strong>Fecha:</strong> ${escapeHtml(new Date(request.created_at).toLocaleString('es-ES'))}</p>
+              ${fileUrl ? '<a class="file-link" href="' + fileUrl + '" target="_blank" rel="noopener">Ver archivo</a>' : '<p class="empty">Archivo pendiente.</p>'}
+            </article>
+          `;
+        }));
+
+        const activeEntries = entries.filter((entry, index) => (data[index].estado || 'en_curso') !== 'completada');
+        const completedEntries = entries.filter((entry, index) => data[index].estado === 'completada');
+        requestsContent.innerHTML = `
+          <section class="request-group">
+            <h2>En curso</h2>
+            <div class="request-list">${activeEntries.join('') || '<p class="empty">No tienes solicitudes en curso.</p>'}</div>
+          </section>
+          <section class="request-group">
+            <h2>Completadas</h2>
+            <div class="request-list">${completedEntries.join('') || '<p class="empty">No tienes solicitudes completadas.</p>'}</div>
+          </section>
+        `;
       }
 
-      tabs.forEach(tab => tab.addEventListener('click', () => {
-        selectedStatus = tab.dataset.status;
-        tabs.forEach(currentTab => currentTab.classList.toggle('active', currentTab === tab));
-        renderRequests();
-      }));
-
-      loadRequests().catch(() => { list.innerHTML = '<p class="empty">No se pudieron cargar tus solicitudes.</p>'; });
+      loadRequests().catch(error => {
+        requestsContent.innerHTML = '<p class="empty">No se pudieron cargar tus solicitudes.</p>';
+        console.error(error);
+      });
     </script>
+    <script src="proteccion-interfaz.js"></script>
   </body>
 </html>

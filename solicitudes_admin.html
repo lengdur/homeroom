@@ -13,6 +13,9 @@
       .subtitle { margin: 0 0 26px; color: #607581; }
       .request { padding: 20px 0; border-top: 1px solid #d9e7e9; }
       .request:first-child { border-top: 0; }
+      .request-group + .request-group { margin-top: 28px; }
+      .request-group h2 { margin: 0 0 12px; color: #285b68; font-size: 1.3rem; }
+      .request-group-list { display: grid; }
       .request h2 { margin: 0 0 8px; color: #285b68; font-size: 1.2rem; }
       .request p { margin: 7px 0; line-height: 1.45; }
       .date { color: #6c7f87; font-size: .9rem; }
@@ -35,7 +38,7 @@
     <main class="container">
       <a class="back" href="admin.html">← Volver al panel admin</a>
       <h1>Solicitudes</h1>
-      <p class="subtitle">Ordenadas desde la más antigua hasta la más reciente</p>
+      <p class="subtitle">Ordenadas de más reciente a más antigua y separadas por estado.</p>
       <section id="requestsList"></section>
     </main>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -50,36 +53,85 @@
         return String(value).replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' })[character]);
       }
 
+      const tipoLabels = {
+        texto: 'Apunte',
+        exposicion: 'Esquema',
+        apunte: 'Apunte',
+        esquema: 'Esquema'
+      };
+
       async function loadRequests() {
-        const { data, error } = await supabaseClient.from('solicitudes').select('*').order('created_at', { ascending: true });
+        const { data, error } = await supabaseClient.from('solicitudes').select('*').order('created_at', { ascending: false });
         if (error) { list.innerHTML = '<p class="empty">' + escapeHtml(error.message) + '</p>'; return; }
-        list.innerHTML = data.length ? '' : '<p class="empty">No hay solicitudes todavía.</p>';
-        data.forEach(request => {
+        if (!data.length) { list.innerHTML = '<p class="empty">No hay solicitudes todavía.</p>'; return; }
+
+        const activeRequests = data.filter(request => (request.estado || 'en_curso') !== 'completada');
+        const completedRequests = data.filter(request => request.estado === 'completada');
+        list.innerHTML = '';
+
+        const activeSection = document.createElement('section');
+        activeSection.className = 'request-group';
+        activeSection.innerHTML = '<h2>En curso</h2><div class="request-group-list"></div>';
+        list.appendChild(activeSection);
+
+        const completedSection = document.createElement('section');
+        completedSection.className = 'request-group';
+        completedSection.innerHTML = '<h2>Completadas</h2><div class="request-group-list"></div>';
+        list.appendChild(completedSection);
+
+        await renderRequestGroup(activeRequests, activeSection.querySelector('.request-group-list'));
+        await renderRequestGroup(completedRequests, completedSection.querySelector('.request-group-list'));
+
+        if (!activeRequests.length) activeSection.querySelector('.request-group-list').innerHTML = '<p class="empty">No hay solicitudes en curso.</p>';
+        if (!completedRequests.length) completedSection.querySelector('.request-group-list').innerHTML = '<p class="empty">No hay solicitudes completadas.</p>';
+
+        document.querySelectorAll('.upload').forEach(form => form.addEventListener('submit', uploadFile));
+        document.querySelectorAll('[data-status-id]').forEach(button => button.addEventListener('click', updateStatus));
+      }
+
+      async function renderRequestGroup(requests, group) {
+        for (const request of requests) {
           const item = document.createElement('article');
           item.className = 'request';
-          item.innerHTML = '<h2>' + escapeHtml(request.tema) + ' · ' + escapeHtml(request.tipo) + '</h2>'
+          const tipoNombre = tipoLabels[request.tipo] || request.tipo || 'Solicitud';
+          const fileUrl = request.archivo_url ? await getSignedStorageUrl(request.archivo_url) : '';
+          item.innerHTML = '<h2>' + escapeHtml(request.tema) + ' · ' + escapeHtml(tipoNombre) + '</h2>'
             + '<p><strong>Usuario:</strong> ' + escapeHtml(request.email) + '</p>'
             + '<p><strong>Páginas:</strong> ' + escapeHtml(request.paginas) + '</p>'
             + '<p><strong>Descripción:</strong> ' + escapeHtml(request.descripcion) + '</p>'
             + '<p class="date">' + new Date(request.created_at).toLocaleString('es-ES') + '</p>'
             + '<p><strong>Estado:</strong> ' + (request.estado === 'completada' ? 'Completada' : 'En curso') + '</p>'
-            + (request.archivo_url ? '<a class="file-link" href="' + supabaseClient.storage.from('archivos').getPublicUrl(request.archivo_url).data.publicUrl + '" target="_blank" rel="noopener">Ver archivo enviado</a>' : '<form class="upload" data-id="' + request.id + '"><input type="file" name="archivo" required><button type="submit">Subir archivo</button></form>')
+            + (fileUrl ? '<a class="file-link" href="' + fileUrl + '" target="_blank" rel="noopener">Ver archivo enviado</a>' : '<form class="upload" data-id="' + request.id + '"><input type="file" name="archivo" required><button type="submit">Subir archivo</button></form>')
             + '<br><button class="status-button ' + (request.estado === 'completada' ? 'reopen' : '') + '" type="button" data-status-id="' + request.id + '">' + (request.estado === 'completada' ? 'Volver a poner en curso' : 'Marcar como completada') + '</button>';
-          list.appendChild(item);
-        });
-        document.querySelectorAll('.upload').forEach(form => form.addEventListener('submit', uploadFile));
-        document.querySelectorAll('[data-status-id]').forEach(button => button.addEventListener('click', updateStatus));
+          group.appendChild(item);
+        }
       }
 
       async function uploadFile(event) {
         event.preventDefault();
-        const file = event.currentTarget.querySelector('input[type="file"]').files[0];
-        const path = 'solicitudes/' + event.currentTarget.dataset.id + '/' + crypto.randomUUID() + '-' + file.name;
-        const upload = await supabaseClient.storage.from('archivos').upload(path, file);
-        if (upload.error) { showNotification(upload.error.message, 'error'); return; }
-        const { error } = await supabaseClient.from('solicitudes').update({ archivo_url: path, estado: 'completada' }).eq('id', event.currentTarget.dataset.id);
-        showNotification(error ? error.message : 'Archivo subido correctamente.', error ? 'error' : 'success');
-        if (!error) loadRequests();
+        const form = event.currentTarget;
+        const file = form.querySelector('input[type="file"]').files[0];
+        const button = form.querySelector('button');
+        if (!file) return;
+
+        button.disabled = true;
+        try {
+          const filePath = 'solicitudes/' + form.dataset.id + '/' + crypto.randomUUID() + '-' + file.name;
+          const { error: uploadError } = await supabaseClient.storage.from('archivos').upload(filePath, file);
+          if (uploadError) throw uploadError;
+
+          const { error: updateError } = await supabaseClient
+            .from('solicitudes')
+            .update({ archivo_url: filePath, estado: 'completada' })
+            .eq('id', form.dataset.id);
+          if (updateError) throw updateError;
+
+          showNotification('Archivo subido correctamente.', 'success');
+          loadRequests();
+        } catch (error) {
+          showNotification(error.message || 'No se pudo subir el archivo.', 'error');
+          button.disabled = false;
+        }
       }
 
       async function updateStatus(event) {
@@ -92,5 +144,6 @@
 
       loadRequests().catch(() => { list.innerHTML = '<p class="empty">No se pudieron cargar las solicitudes.</p>'; });
     </script>
+    <script src="proteccion-interfaz.js"></script>
   </body>
 </html>

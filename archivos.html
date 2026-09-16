@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Archivos</title>
+    <style>
+      * { box-sizing: border-box; }
+      :root { --ink: #263746; --muted: #607581; --accent: #286675; --line: #c8dde0; }
+      body { margin: 0; min-height: 100vh; padding: 24px; background: linear-gradient(135deg, #edf7f6, #d8eaf0); font-family: "Trebuchet MS", "Segoe UI", sans-serif; color: var(--ink); }
+      .container { width: min(94vw, 980px); margin: 0 auto; padding: 30px; background: rgba(255, 255, 255, .94); border: 2px solid #9dc9cf; border-radius: 16px; box-shadow: 0 16px 40px rgba(35, 67, 80, .16); }
+      .back { display: inline-block; margin-bottom: 14px; color: var(--accent); font-weight: 700; }
+      h1 { margin: 0; color: var(--accent); }
+      .subtitle { margin: 8px 0 24px; color: var(--muted); }
+      .admin-panel, .filters { padding: 20px; border: 1px solid var(--line); border-radius: 10px; background: #f6fbfb; }
+      .admin-panel { margin-bottom: 24px; }
+      .admin-panel h2 { margin: 0 0 16px; font-size: 1.15rem; color: var(--accent); }
+      .form-grid, .filters { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+      .form-grid label { display: flex; flex-direction: column; gap: 6px; color: var(--accent); font-weight: 700; }
+      .form-grid .wide { grid-column: span 2; }
+      input, select, button { width: 100%; padding: 11px 12px; border: 1px solid #a9c8cc; border-radius: 7px; font: inherit; }
+      input, select { background: white; color: var(--ink); }
+      button { border: 0; background: var(--accent); color: white; font-weight: 700; cursor: pointer; }
+      button:disabled { cursor: wait; opacity: .65; }
+      .form-grid button { align-self: end; }
+      .filters { margin-bottom: 20px; background: white; }
+      .filters label { display: flex; flex-direction: column; gap: 6px; color: var(--accent); font-weight: 700; }
+      .preview-section { margin: 24px 0 18px; padding: 18px; border: 1px solid var(--line); border-radius: 12px; background: #f8fbfb; }
+      .preview-section h2 { margin: 0 0 12px; color: var(--accent); }
+      .file-preview { min-height: 180px; display: grid; place-items: center; border: 1px dashed #9dc9cf; border-radius: 10px; background: white; overflow: hidden; }
+      .file-preview img, .file-preview iframe { width: 100%; max-height: 420px; border: 0; }
+      .file-preview img { object-fit: contain; max-height: 380px; }
+      .file-preview pre { margin: 0; width: 100%; max-height: 360px; overflow: auto; padding: 16px; background: #f4f7f8; color: var(--ink); white-space: pre-wrap; word-break: break-word; }
+      .file-preview .preview-empty { padding: 18px; color: var(--muted); text-align: center; }
+      .files { display: grid; gap: 12px; }
+      .file-item { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 16px; border-left: 5px solid #6baab0; background: #f8fbfb; }
+      .file-item h2 { margin: 0 0 6px; font-size: 1.1rem; color: var(--ink); }
+      .file-item p { margin: 3px 0; color: var(--muted); }
+      .file-item a { flex: 0 0 auto; padding: 10px 14px; border-radius: 7px; background: #e1f0f1; color: var(--accent); font-weight: 700; text-decoration: none; }
+      .empty { padding: 22px; color: var(--muted); text-align: center; }
+      .notice { margin: 12px 0 0; color: #a13f3f; font-weight: 700; }
+      @media (max-width: 680px) {
+        body { padding: 12px; }
+        .container { padding: 22px 16px; }
+        .form-grid, .filters { grid-template-columns: 1fr; }
+        .form-grid .wide { grid-column: auto; }
+        .file-item { align-items: stretch; flex-direction: column; gap: 10px; }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="container">
+      <a class="back" href="inicio.html">← Inicio</a>
+      <h1>Archivos</h1>
+      <p class="subtitle">Material ordenado por tema y por tipo de contenido.</p>
+
+      <section id="adminPanel" class="admin-panel" hidden>
+        <h2>Subir archivo</h2>
+        <form id="fileForm" class="form-grid">
+          <label>Título<input id="title" type="text" required maxlength="120" placeholder="Ej. Apuntes de la unidad 1" /></label>
+          <label>Tema<select id="topic" required></select></label>
+          <label>Tipo<select id="type" required><option value="texto">Apunte</option><option value="exposicion">Esquema</option></select></label>
+          <label class="wide">Archivo<input id="file" type="file" required accept="image/*,.pdf,.doc,.docx,.txt,.md,.csv" /></label>
+          <button type="submit">Subir archivo</button>
+        </form>
+        <p id="adminNotice" class="notice" role="status"></p>
+      </section>
+
+      <section id="previewSection" class="preview-section" hidden>
+        <h2>Previsualización</h2>
+        <div id="filePreview" class="file-preview"></div>
+      </section>
+
+      <section class="filters" aria-label="Filtros de archivos">
+        <label>Tema<select id="topicFilter"><option value="">Todos los temas</option></select></label>
+        <label>Tipo<select id="typeFilter"><option value="">Apuntes y esquemas</option><option value="texto">Apuntes</option><option value="exposicion">Esquemas</option></select></label>
+        <label>Orden<select id="orderFilter"><option value="asc">Más antiguos primero</option><option value="desc">Más recientes primero</option></select></label>
+      </section>
+
+      <section id="files" class="files" aria-live="polite"></section>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+    <script src="notificaciones.js"></script>
+    <script>
+      const topics = ['Mates', 'Lengua', 'Historia', 'Biología/Geología', 'Física/Química'];
+      const files = document.getElementById('files');
+      const topicFilter = document.getElementById('topicFilter');
+      const typeFilter = document.getElementById('typeFilter');
+      const orderFilter = document.getElementById('orderFilter');
+      const adminPanel = document.getElementById('adminPanel');
+      const fileForm = document.getElementById('fileForm');
+      const adminNotice = document.getElementById('adminNotice');
+      const fileInput = document.getElementById('file');
+      const previewSection = document.getElementById('previewSection');
+      const filePreview = document.getElementById('filePreview');
+
+      function fillTopics(select, includeAll) {
+        if (includeAll && !select.querySelector('option[value=""]')) select.insertAdjacentHTML('beforeend', '<option value="">Todos los temas</option>');
+        topics.forEach(topic => select.insertAdjacentHTML('beforeend', '<option value="' + topic + '">' + topic + '</option>'));
+      }
+
+      function escapeHtml(value) {
+        return String(value).replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' })[character]);
+      }
+
+      function renderPreview(file) {
+        if (!file) {
+          previewSection.hidden = true;
+          filePreview.innerHTML = '<div class="preview-empty">Selecciona un archivo para verlo aquí.</div>';
+          return;
+        }
+
+        previewSection.hidden = false;
+        filePreview.innerHTML = '';
+        const fileName = file.name.toLowerCase();
+
+        if (file.type.startsWith('image/')) {
+          const img = document.createElement('img');
+          img.src = URL.createObjectURL(file);
+          img.alt = file.name;
+          filePreview.appendChild(img);
+          return;
+        }
+
+        if (file.type === 'application/pdf' || fileName.endsWith('.pdf')) {
+          const iframe = document.createElement('iframe');
+          iframe.src = URL.createObjectURL(file);
+          iframe.title = 'Previsualización PDF';
+          filePreview.appendChild(iframe);
+          return;
+        }
+
+        if (file.type.startsWith('text/') || fileName.endsWith('.txt') || fileName.endsWith('.md') || fileName.endsWith('.csv')) {
+          const reader = new FileReader();
+          reader.onload = () => {
+            const pre = document.createElement('pre');
+            pre.textContent = String(reader.result || 'No hay contenido para previsualizar.');
+            filePreview.appendChild(pre);
+          };
+          reader.readAsText(file);
+          return;
+        }
+
+        filePreview.innerHTML = '<div class="preview-empty">Este archivo no tiene vista previa disponible. Puedes abrirlo desde el enlace de descarga.</div>';
+      }
+
+      fileInput.addEventListener('change', event => {
+        const selectedFile = event.target.files && event.target.files[0];
+        renderPreview(selectedFile);
+      });
+
+      async function loadFiles() {
+        files.innerHTML = '<p class="empty">Cargando archivos...</p>';
+        let query = supabaseClient.from('archivos').select('*');
+        if (topicFilter.value) query = query.eq('tema', topicFilter.value);
+        if (typeFilter.value) query = query.eq('tipo', typeFilter.value);
+        query = query.order('created_at', { ascending: orderFilter.value === 'asc' });
+        const { data, error } = await query;
+        if (error) { files.innerHTML = '<p class="empty">' + escapeHtml(error.message) + '</p>'; return; }
+        if (!data.length) { files.innerHTML = '<p class="empty">No hay archivos para estos filtros.</p>'; return; }
+
+        const links = await Promise.all(data.map(async file => {
+          const { data: signed } = await supabaseClient.storage.from('archivos').createSignedUrl(file.archivo_url, 3600);
+          return { file, url: signed?.signedUrl || '#' };
+        }));
+        files.innerHTML = links.map(({ file, url }) => '<article class="file-item"><div><h2>' + escapeHtml(file.titulo) + '</h2><p>' + escapeHtml(file.tema) + ' · ' + (file.tipo === 'texto' ? 'Apunte' : 'Esquema') + '</p><p>' + escapeHtml(file.nombre_archivo) + '</p></div><a href="' + escapeHtml(url) + '" target="_blank" rel="noopener">Abrir archivo</a></article>').join('');
+      }
+
+      async function setup() {
+        fillTopics(document.getElementById('topic'), false);
+        fillTopics(topicFilter, true);
+        const profile = await getCurrentProfile();
+        if (!profile) { window.location.replace('iniciar_sesion.html'); return; }
+        if (['admin', 'op'].includes(profile.rango)) adminPanel.hidden = false;
+        loadFiles();
+      }
+
+      fileForm.addEventListener('submit', async event => {
+        event.preventDefault();
+        const file = document.getElementById('file').files[0];
+        const button = fileForm.querySelector('button');
+        if (!file) return;
+        button.disabled = true;
+        adminNotice.textContent = '';
+        try {
+          const path = 'biblioteca/' + crypto.randomUUID() + '-' + file.name;
+          const upload = await supabaseClient.storage.from('archivos').upload(path, file);
+          if (upload.error) throw upload.error;
+          const { error } = await supabaseClient.from('archivos').insert({
+            titulo: document.getElementById('title').value.trim(),
+            tema: document.getElementById('topic').value,
+            tipo: document.getElementById('type').value,
+            archivo_url: path,
+            nombre_archivo: file.name
+          });
+          if (error) throw error;
+          fileForm.reset();
+          previewSection.hidden = true;
+          filePreview.innerHTML = '<div class="preview-empty">Selecciona un archivo para verlo aquí.</div>';
+          showNotification('Archivo subido correctamente.', 'success');
+          loadFiles();
+        } catch (error) {
+          adminNotice.textContent = error.message || 'No se pudo subir el archivo.';
+        } finally {
+          button.disabled = false;
+        }
+      });
+
+      [topicFilter, typeFilter, orderFilter].forEach(control => control.addEventListener('change', loadFiles));
+      setup().catch(error => { files.innerHTML = '<p class="empty">' + escapeHtml(error.message || 'No se pudo cargar la biblioteca.') + '</p>'; });
+    </script>
+    <script src="proteccion-interfaz.js"></script>
+  </body>
+</html>
