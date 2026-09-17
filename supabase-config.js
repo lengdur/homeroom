@@ -73,3 +73,27 @@ async function getSignedStorageUrl(filePath, expiresInSeconds = 3600) {
     return resolveStorageUrl(filePath);
   }
 }
+
+async function startPresenceTracking() {
+  try {
+    const user = await getCurrentUser();
+    if (!user) return null;
+
+    const presenceChannel = supabaseClient.channel('usuarios-online', {
+      config: { presence: { key: user.id } }
+    });
+
+    presenceChannel.subscribe(async status => {
+      if (status === 'SUBSCRIBED') {
+        await presenceChannel.track({ email: user.email });
+      }
+    });
+
+    return presenceChannel;
+  } catch (error) {
+    console.warn('No se pudo iniciar la presencia en línea.', error);
+    return null;
+  }
+}
+
+startPresenceTracking();
